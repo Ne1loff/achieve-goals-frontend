@@ -1,30 +1,43 @@
 <script lang="ts">
-	export let name: string;
+    import {SvelteToast} from '@zerodevx/svelte-toast'
+    import {navigate, Route, Router} from "svelte-routing";
+    import {HomePage, LoginPage, NotfoundPage, ProfilePage, RegistrationPage} from "./data/pages";
+    import {onMount} from "svelte";
+
+    onMount(() => navigate('/login'));
+
 </script>
 
-<main>
-	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
-</main>
+<Router>
+    <Route path="/login">
+        <LoginPage/>
+    </Route>
+    <Route path="/registration">
+        <RegistrationPage/>
+    </Route>
+    <Route path="/home">
+        <HomePage/>
+        <!--        <Route path="/home/goal/:id" let:params><Route/>    -->
+    </Route>
+    <Route path="/user/profile">
+        <ProfilePage/>
+    </Route>
+    <Route path="/*">
+        <NotfoundPage/>
+    </Route>
+</Router>
+<SvelteToast options={{pausable: true}}/>
 
 <style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
+    :global(body) {
+        min-height: 100vh;
+        min-width: 100vw;
 
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
+        padding: 0;
+        margin: 0;
+
+        overflow: hidden;
+    }
+
 </style>
