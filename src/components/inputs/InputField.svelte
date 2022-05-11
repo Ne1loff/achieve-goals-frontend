@@ -1,25 +1,81 @@
 <script lang="ts">
 
-    export let bindText: string;
+    import {onMount} from "svelte";
+    import Icon from "@iconify/svelte";
+    import {l10n} from "../../resources/localization/l10n";
+
+    export let value: string;
+    export let type: 'text' | 'password' | 'email' | 'number' | 'url' = 'text';
     export let label: string = undefined;
     export let placeholderText: string = ' ';
+    export let newPass: boolean = false;
+    export let showPassword: boolean = false;
+    export let validate: boolean = false;
+    export let required: boolean = false;
+    export let pattern: RegExp = undefined;
     export let error: boolean = false;
+    export let requiredErrorMessage: string = l10n.requiredErrorText;
+    export let patternErrorMessage: string = undefined;
 
+    export let IconWhenPass = 'akar-icons:eye-closed';
+    export let IconWhenText = 'akar-icons:eye-open';
+
+    let requiredError: boolean = false;
+    let patternError: boolean = false;
+
+    onMount(() => {
+        if (pattern) validate = true;
+        inputEl.type = type;
+        inputEl.required = required;
+        if (type === 'password')
+            inputEl.autocomplete = newPass ? 'new-password' : 'on';
+    });
+
+    let inputEl: HTMLInputElement;
     const inputId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+
+    const isRequired = () => {
+        if (required) requiredError = value === '';
+    }
+
+    $: patternError = (value && validate && pattern) ? !pattern?.test(value) : patternError;
+    $: error = requiredError || patternError || error;
+    $: {
+        if (type === 'password' && inputEl) inputEl.type = showPassword ? 'text' : 'password';
+    }
 
 </script>
 
 
 <div class="input_container" class:error>
-
-    <input id={inputId} class="input_field" type="text" placeholder={placeholderText} autocomplete="on"
-           bind:value={bindText}>
-    {#if label && placeholderText === ' '}
+    <input bind:this={inputEl}
+           bind:value
+           on:focusout={isRequired}
+           on:focusin={() => error = false}
+           id={inputId}
+           class="input_field"
+           placeholder={placeholderText}
+           autocomplete="on">
+    {#if label}
         <label for={inputId} class="input_label">{label}</label>
     {/if}
-    <div class="void"></div>
+    {#if type === 'password'}
+        <div class="icon_holder" style="visibility: {value === '' ? 'hidden' : 'visible'}"
+             on:click={() => {showPassword = !showPassword}}>
+            <Icon class="input_box_icon"
+                  icon="{showPassword ? IconWhenText : IconWhenPass }"/>
+        </div>
+    {:else }
+        <div class="void"></div>
+    {/if}
 </div>
-
+{#if error}
+    <div class="error-container">
+        <span class="error-message">
+            {patternError ? patternErrorMessage : requiredError ? requiredErrorMessage : ''}
+        </span>
+    </div>
+{/if}
 
 <style lang="scss">
 
@@ -28,13 +84,14 @@
     --custom-width: 100%;
     --custom-margin: 0;
     --custom-border-color: #dddfe2;
+    --custom-transparent-duration: 200ms;
   }
 
   .input_container {
     position: relative;
 
     background: white;
-    max-width: var(--custom-width, 100%);
+    width: var(--custom-width);
     max-height: var(--custom-height);
     margin: var(--custom-margin);
 
@@ -48,6 +105,16 @@
     justify-content: space-between;
   }
 
+  .error-container {
+    width: var(--custom-width);
+    display: flex;
+    justify-content: start;
+  }
+
+  .error-message {
+    color: var(--own-input-error-color);
+  }
+
   .input_container.error {
     color: var(--own-input-error-color);
     border-color: var(--own-input-error-color);
@@ -57,16 +124,26 @@
     position: absolute;
 
     top: 50%;
-    left: 1rem;
+    left: 14px;
     transform: translate(0, -50%);
 
     cursor: text;
-    transition: top 200ms ease-in, left 200ms ease-in, font-size 200ms ease-in, transform 200ms ease-in;
+    transition: top var(--custom-transparent-duration) ease-in,
+    left var(--custom-transparent-duration) ease-in,
+    font-size var(--custom-transparent-duration) ease-in,
+    transform var(--custom-transparent-duration) ease-in;
     background: inherit;
   }
 
   .input_field:focus ~ .input_label,
   .input_field:not(:placeholder-shown).input_field:not(:focus) ~ .input_label {
+    top: -10%;
+    font-size: 0.8rem;
+    left: 0.8rem;
+    transform: translate(0px, -10%);
+  }
+
+  .input_field:-webkit-autofill.input_field:not(:focus) ~ .input_label {
     top: -10%;
     font-size: 0.8rem;
     left: 0.8rem;
@@ -82,8 +159,69 @@
     margin: 0;
   }
 
+  input::-webkit-input-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input::-moz-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:-moz-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:-ms-input-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus::-webkit-input-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus::-moz-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus:-moz-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus:-ms-input-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
   .input_field:focus {
     outline: none;
+  }
+
+  .icon_holder {
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+  }
+
+  .icon_holder:hover {
+    background: rgba(0, 0, 0, .05);
+  }
+
+  :global(.input_box_icon) {
+    width: 20px;
+    height: 20px;
   }
 
   .void {

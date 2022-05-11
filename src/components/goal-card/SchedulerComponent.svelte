@@ -2,7 +2,7 @@
     import dayjs from 'dayjs';
     import Icon from "@iconify/svelte";
     import SchedulerModal from "../modals/SchedulerModal.svelte";
-    import Goal from "../../data/dtos/Goal";
+    import Goal from "../../data/models/Goal";
     import InlineCalendar from "./InlineCalendar.svelte";
     import TimeComponent from "./TimeComponent.svelte";
 

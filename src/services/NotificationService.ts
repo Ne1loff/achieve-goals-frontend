@@ -1,6 +1,24 @@
 import {toast} from "@zerodevx/svelte-toast";
 import NotificationComponent from "../components/NotificationComponent.svelte";
 import {NotificationType} from "../data/enums/_enums";
+import type ApiError from "../data/api/ApiError";
+
+class ErrorMessage {
+    title?: string;
+    subtitle?: string;
+    caption?: string;
+    duration?: number;
+
+    fromApiError(apiError: ApiError, duration?: number): ErrorMessage {
+        this.title = `Error: (HTTP ${apiError.status}: ${apiError.error})`;
+        this.subtitle = apiError.message;
+        this.caption = apiError.timestamp.toString();
+        this.duration = duration;
+        return this;
+    }
+}
+
+export {ErrorMessage};
 
 export default class NotificationService {
 
@@ -28,8 +46,8 @@ export default class NotificationService {
                 },
                 sendIdTo: 'toastId'
             },
-            initial: 0,
-            duration: duration ?? 5000,
+            initial: 1,
+            duration: duration ?? 10000,
             theme: {
                 '--toastPadding': '0',
                 '--toastMsgPadding': '0',
@@ -52,6 +70,10 @@ export default class NotificationService {
 
     error(title?: string, subtitle?: string, caption?: string, duration?: number) {
         NotificationService.showNotification(NotificationType.ERROR, title, subtitle, caption, duration);
+    }
+
+    errorFromErrorMessage(errorMessage: ErrorMessage) {
+        this.error(errorMessage.title, errorMessage.subtitle, errorMessage.caption, errorMessage.duration)
     }
 
 }

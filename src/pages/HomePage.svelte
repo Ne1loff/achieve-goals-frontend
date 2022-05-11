@@ -5,7 +5,7 @@
     import GoalComponent from "../components/goal-card/GoalComponent.svelte";
     import {navigate} from "svelte-routing";
     import Icon from "@iconify/svelte";
-    import Goal from "../data/dtos/Goal";
+    import Goal from "../data/models/Goal";
 
     let open = true;
 

@@ -1,5 +1,5 @@
 // @ts-ignore
-import Goal from "../data/dtos/Goal";
+import Goal from "../data/models/Goal";
 import Request from "./Request";
 
 export default class GoalService {

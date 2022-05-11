@@ -1,12 +1,17 @@
 <script lang="ts">
     import Icon from "@iconify/svelte"
+    import {onMount} from "svelte";
 
-    export let password: string = '';
+    export let password: string;
     export let placeholderText: string = ' ';
     export let label: string = undefined;
-    export let newPass: string;
-    export let error: boolean = false;
+    export let newPass: boolean = false;
     export let showPassword: boolean = false;
+    export let error: boolean = false;
+    export let validate: boolean = false;
+    export let required: boolean = false;
+    export let pattern: RegExp = undefined;
+    export let errorMessage: string = undefined;
 
     export let IconWhenPass = 'akar-icons:eye-closed';
     export let IconWhenText = 'akar-icons:eye-open';
@@ -20,15 +25,30 @@
         }
     }
 
+    $: error = (password && validate && pattern) ? !pattern?.test(password) : error;
+
+    const isRequired = () => {
+        if (required) error = password === '';
+    }
+
+    onMount(() => {
+        if (pattern) validate = true;
+        inputEl.required = required;
+        inputEl.autocomplete = newPass ? 'new-password' : 'on'
+    });
+
 </script>
 
 <div class="input_container" class:error>
 
-    <input id={inputId} class="input_field" bind:this={inputEl}
-           placeholder="{placeholderText}"
+    <input id={inputId}
+           class="input_field"
+           bind:this={inputEl}
            bind:value={password}
-           autocomplete="{newPass ? 'new-password' : 'on'}">
-    {#if label && placeholderText === ' '}
+           on:focusout={isRequired}
+           on:focusin={() => error = false}
+           placeholder={placeholderText}>
+    {#if label}
         <label for={inputId} class="input_label">{label}</label>
     {/if}
     <div class="icon_holder" style="visibility: {password === '' ? 'hidden' : 'visible'}"
@@ -37,6 +57,9 @@
               icon="{showPassword ? IconWhenText : IconWhenPass }"/>
     </div>
 </div>
+{#if errorMessage && error}
+    <span class="error-message">{errorMessage}</span>
+{/if}
 
 
 <style lang="scss">
@@ -46,7 +69,7 @@
     --custom-width: 100%;
     --custom-margin: 0;
     --custom-border-color: #dddfe2;
-
+    --custom-transparent-duration: 200ms;
     --own-input-error-color: #fa4d56;
   }
 
@@ -54,7 +77,7 @@
     position: relative;
 
     background: white;
-    max-width: var(--custom-width);
+    width: var(--custom-width);
     max-height: var(--custom-height);
     margin: var(--custom-margin);
 
@@ -67,6 +90,10 @@
     align-items: center;
     justify-content: space-between;
     user-select: none;
+  }
+
+  .error-message {
+    color: var(--own-input-error-color);
   }
 
   .input_container.error {
@@ -82,12 +109,22 @@
     transform: translate(0, -50%);
 
     cursor: text;
-    transition: top 200ms ease-in, left 200ms ease-in, font-size 200ms ease-in, transform 200ms ease-in;
+    transition: top var(--custom-transparent-duration) ease-in,
+    left var(--custom-transparent-duration) ease-in,
+    font-size var(--custom-transparent-duration) ease-in,
+    transform var(--custom-transparent-duration) ease-in;
     background: inherit;
   }
 
   .input_field:focus ~ .input_label,
   .input_field:not(:placeholder-shown).input_field:not(:focus) ~ .input_label {
+    top: -10%;
+    font-size: 0.8rem;
+    left: 0.8rem;
+    transform: translate(0px, -10%);
+  }
+
+  .input_field:-webkit-autofill.input_field:not(:focus) ~ .input_label {
     top: -10%;
     font-size: 0.8rem;
     left: 0.8rem;
@@ -101,6 +138,46 @@
 
     padding: 0;
     margin: 0;
+  }
+
+  input::-webkit-input-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input::-moz-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:-moz-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:-ms-input-placeholder {
+    opacity: 0;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus::-webkit-input-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus::-moz-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus:-moz-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
+  }
+
+  input:focus:-ms-input-placeholder {
+    opacity: 1;
+    transition: var(--custom-transparent-duration) ease-in;
   }
 
   .input_field:focus {

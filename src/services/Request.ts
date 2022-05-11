@@ -23,7 +23,8 @@ class RequestData<T> {
 export default class Request {
     private static INSTANCE: Request;
 
-    private constructor() { };
+    private constructor() {
+    };
 
     static getInstance = () => this.INSTANCE ?? new Request();
 
@@ -39,7 +40,14 @@ export default class Request {
         let request;
 
         if (method === Method.GET) {
-            request = fetch(`${base}/${url}`);
+            request = fetch(`${base}/${url}`).catch((reason: TypeError) => {
+                throw new ApiResponse(0, {
+                    status: 503,
+                    error: 'Service Unavailable',
+                    message: reason.message,
+                    timestamp: new Date()
+                } as ApiError);
+            });
         } else {
             request = fetch(`${base}/${url}`, {
                 method: method,
@@ -48,10 +56,17 @@ export default class Request {
                 },
                 body: requestData.dataType === DataType.JSON ?
                     JSON.stringify(requestData.data) : (requestData.data as any)
-            })
+            }).catch((reason: TypeError) => {
+                throw new ApiResponse(0, {
+                    status: 503,
+                    error: 'Service Unavailable',
+                    message: reason.message,
+                    timestamp: new Date()
+                } as ApiError);
+            });
         }
 
-        return request.then(async (response) => {
+        return request.then(async (response: Response) => {
             const data = await response.json();
             if (response.ok)
                 return new ApiResponse(response.status, data as T);

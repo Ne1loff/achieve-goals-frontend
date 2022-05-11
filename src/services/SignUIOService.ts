@@ -1,5 +1,6 @@
 import Request from "./Request";
-import type {Login, Registration} from "../data/_types_"
+import type Login from "../data/models/Login";
+import type Registration from "../data/models/Registration";
 import {DataType} from "../data/enums/_enums";
 
 

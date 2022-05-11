@@ -1,5 +1,8 @@
 <script lang="ts">
 
+    export let outlined: boolean = false;
+    export let outlinedBottom: boolean = false;
+
 </script>
 
 <style lang="scss">
@@ -10,6 +13,9 @@
     --own-nav-bar-justify-content: space-between;
     --own-nav-bar-align-items: center;
     --own-nav-bar-align-content: center;
+
+    --own-nav-bar-border-size: 2px;
+    --own-nav-bar-border-color: #000;
 
     --own-nav-bar-left-margin-left: 0px;
     --own-nav-bar-left-justify-content: flex-start;
@@ -43,6 +49,14 @@
     align-content: var(--own-nav-bar-align-content);
   }
 
+  .nav-bar.outlined {
+    border: var(--own-nav-bar-border-size) solid var(--own-nav-bar-border-color);
+  }
+
+  .nav-bar.outlinedBottom {
+    border-bottom: var(--own-nav-bar-border-size) solid var(--own-nav-bar-border-color);
+  }
+
   .nav-bar-left, .nav-bar-center, .nav-bar-right {
     height: 100%;
     display: flex;
@@ -72,7 +86,7 @@
 
 </style>
 
-<div class="nav-bar">
+<div class="nav-bar" class:outlined class:outlinedBottom>
     {#if $$slots.left}
         <div class="nav-bar-left">
             <slot name="left"></slot>

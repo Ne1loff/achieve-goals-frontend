@@ -6,7 +6,7 @@
     import {createEventDispatcher} from 'svelte';
     import dayjs from 'dayjs';
     import {PRIORITY_COLORS} from "../../resources/constants";
-    import Goal from '../../data/dtos/Goal'
+    import Goal from '../../data/models/Goal'
     import Popover from "../popover/Popover.svelte";
     import InlineCalendar from "./InlineCalendar.svelte";
 

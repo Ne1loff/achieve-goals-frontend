@@ -2,7 +2,11 @@
     import {navigate} from "svelte-routing";
     import {Button} from "carbon-components-svelte";
     import Navbar from "../components/Navbar.svelte";
+    import {onMount} from "svelte";
 
+    onMount(() => {
+        navigate('/login');
+    });
 </script>
 
 

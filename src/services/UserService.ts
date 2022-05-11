@@ -1,5 +1,5 @@
 import Request from "./Request";
-import type User from "../data/dtos/User";
+import type User from "../data/models/User";
 
 export default class UserService {
     private static INSTANCE: UserService;

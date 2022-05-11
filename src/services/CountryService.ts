@@ -1,5 +1,5 @@
 // @ts-ignore
-import Country from "../data/dtos/Country";
+import Country from "../data/models/Country";
 import Request from "./Request";
 
 export default class CountryService {
@@ -12,7 +12,7 @@ export default class CountryService {
 
     static getInstance = () => this.INSTANCE ?? new CountryService();
 
-    async getLocalities(): Promise<Country[]> {
+    async getCountries(): Promise<Country[]> {
         return this.request.get<Country[]>('api/countries/')
             .then((apiResponse) => apiResponse.data as Country[]);
     }

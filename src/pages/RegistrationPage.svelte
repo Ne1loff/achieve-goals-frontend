@@ -1,152 +1,171 @@
 <script lang="ts">
     import {Link, navigate} from "svelte-routing";
-    import PasswordField from "../components/inputs/PasswordField.svelte";
-    import InputField from "../components/inputs/InputField.svelte";
-    import Navbar from "../components/Navbar.svelte";
     import {Button, ContentSwitcher, Switch} from "carbon-components-svelte";
     import Icon from "@iconify/svelte";
+    import {Login as LoginIcon} from "carbon-icons-svelte";
+
     //@ts-ignore
     import Svelecte from 'svelecte';
-    import {Login} from "carbon-icons-svelte";
+    import type Country from "../data/models/Country";
+    import CountryService from "../services/CountryService";
+    import SignUIOService from "../services/SignUIOService";
+    import Registration from "../data/models/Registration";
+    import {onMount} from "svelte";
+    import ApiResponse from "../data/api/ApiResponse";
+    import ApiError from "../data/api/ApiError";
+    import NotificationService, {ErrorMessage} from "../services/NotificationService";
+    import Login from "../data/models/Login";
+    import Navbar from "../components/Navbar.svelte";
+    import InputField from "../components/inputs/InputField.svelte";
+    import {EMAIL_REGEX, PASSWORD_REGEX} from "../resources/regexes";
+    import {l10n} from "../resources/localization/l10n";
 
-    let username = ''
-    let email = ''
-    let male = true
-    let password = ''
-    let confirm_pass = ''
+    let countryService: CountryService;
+    let signUIOService: SignUIOService;
+    let notificationService: NotificationService;
 
-    let countries = [{id: 1, name: ""}];
+    let registration: Registration = new Registration();
+    let confirmedPassword: string = '';
+    let countries: Country[] = [];
 
-    fetch('http://localhost:8080/api/countries/')
-        .then(response => response.json())
-        .then(commit => {
-            countries = commit
-            countries.splice(0, 0, {id: -1, name: "Выберите страну..."})
-            selected = countries[0]
-        })
+    onMount(() => {
+        countryService = CountryService.getInstance();
+        signUIOService = SignUIOService.getInstance();
+        notificationService = NotificationService.getInstance();
 
-    function registration() {
-        fetch('http://localhost:8080/api/registration', {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "username": username,
-                "male": male,
-                "email": email,
-                "locality": selected.id,
-                "password": password
-            })
-        }).then(response => {
-            if (response.status === 201 || response.status === 200) {
-                fetch('http://localhost:8080/api/login', {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        login: username,
-                        password: password,
-                    })
-                }).then(response => {
-                    if (response.status === 200)
-                        navigate('/home')
-                    else
-                        alert("Login or password incorrect")
-                }).catch((err) => {
-                    alert(err)
-                })
-            } else {
-                alert("Произошла ошибка при регистрации")
-            }
-        }).catch((err) => {
-            alert(err)
-        })
+        loadCountries();
+    });
+
+    const loadCountries = () => {
+        countryService.getCountries()
+            .then((it: Country[]) => countries = it)
+            .catch((apiResponse: ApiResponse<ApiError>) => {
+                onError(apiResponse.data);
+                countries = [];
+            });
     }
 
-    let selected = countries[0];
+    const signUp = () => {
+        signUIOService.signUp(registration)
+            .then(() => {
+                signUIOService.logIn(new Login().fromRegistration(registration))
+                    .then(() => navigate('/home'))
+                    .catch((apiResponse: ApiResponse<ApiError>) => onError(apiResponse.data));
+            }).catch((apiResponse: ApiResponse<ApiError>) => onError(apiResponse.data))
+    }
 
-    let clickable;
-    let lessThanMin;
-    let passNotMatch;
+    const onError = (apiError: ApiError) => {
+        notificationService.errorFromErrorMessage(new ErrorMessage().fromApiError(apiError));
+    }
 
+    let clickable: boolean;
+    let passNotMatch: boolean;
     let showPassword: boolean;
+    let selectedIndex: number = 0;
 
-    $:passNotMatch = password !== confirm_pass && confirm_pass;
-    $:lessThanMin = password.length > 0 && password.length < 6;
-    $:clickable = (password === confirm_pass && password && confirm_pass && selected.id !== -1 && password.length >= 6);
+    $:registration.male = selectedIndex === 0
+    $:passNotMatch = (confirmedPassword && registration.password !== confirmedPassword);
+    $:clickable = (registration.password === confirmedPassword
+        && registration.password
+        && confirmedPassword
+        && registration.locality
+        && registration.password.length >= 6);
 
     const handleKeydown = (e) => {
-        if (e.key === 'Enter' && clickable) registration();
+        if (e.key === 'Enter' && clickable) signUp();
     };
 
 </script>
 
 <svelte:window on:keydown={handleKeydown}/>
-<Navbar --own-nav-bar-left-margin-left="4px">
+<Navbar outlinedBottom --own-nav-bar-left-margin-left="4px">
     <img slot="left" class="logo" on:click={() => navigate('/')} src="/static/logo_200x44.png" alt="logo">
 </Navbar>
 <div class="main-content">
     <form class="box" method="post">
         <h1>Sign up</h1>
         <div class="user_details">
-            <InputField bind:bindText={username} label="Username"
+            <InputField bind:value={registration.username} label={l10n.username}
+                        required
                         --custom-height="45px"
                         --custom-width="285px"
                         --custom-margin="8px 0 4px 0"
                         --custom-border-color="#A9A9A9"
             />
-            <InputField bind:bindText={email} label="Email"
+            <InputField bind:value={registration.email} label={l10n.email}
+                        required
+                        type="email"
+                        pattern={EMAIL_REGEX}
+                        patternErrorMessage={l10n.emailPatternErrorText}
                         --custom-height="45px"
                         --custom-width="285px"
                         --custom-margin="8px 0 4px 0"
                         --custom-border-color="#A9A9A9"
             />
-            <Svelecte placeholder="Select country"></Svelecte>
-            <PasswordField bind:password={password} label="Пароль"
-                           newPass={true}
-                           error={passNotMatch || lessThanMin}
-                           bind:showPassword
-                           --custom-height="45px"
-                           --custom-width="285px"
-                           --custom-margin="8px 0 4px 0"
-                           --custom-border-color="#A9A9A9"
+            <Svelecte options={countries}
+                      bind:value={registration.locality}
+                      placeholder={l10n.selectCountry}
+                      selectOnTab
+                      clearable
+                      style="width: 285px;
+                      margin: 8px 0 4px 0;
+                      --sv-dropdown-height: 200px;
+                      --sv-border-color: #A9A9A9;
+                      --sv-border: 1px solid var(--sv-border-color);
+                      --sv-min-height: 45px;
+                      --sv-placeholder-color: var(--cds-text-01, #161616);
+                      color: var(--cds-text-01, #161616);
+                      font-size: 17px;"
+            >
+                <div slot="icon" style="margin-left: 8px; height: 100%; width: 0"></div>
+            </Svelecte>
+            <InputField bind:value={registration.password} label={l10n.password}
+                        type="password"
+                        newPass
+                        required
+                        pattern={PASSWORD_REGEX}
+                        patternErrorMessage={l10n.passwordPatternErrorText}
+                        error={passNotMatch}
+                        bind:showPassword
+                        --custom-height="45px"
+                        --custom-width="285px"
+                        --custom-margin="8px 0 4px 0"
+                        --custom-border-color="#A9A9A9"
             />
-            <PasswordField bind:password={confirm_pass} label="Подтвердите пароль"
-                           newPass="{true}"
-                           error={passNotMatch}
-                           bind:showPassword
-                           --custom-height="45px"
-                           --custom-width="285px"
-                           --custom-margin="8px 0 4px 0"
-                           --custom-border-color="#A9A9A9"
+            <InputField bind:value={confirmedPassword} label={l10n.confirmPass}
+                        type="password"
+                        newPass
+                        error={passNotMatch}
+                        bind:showPassword
+                        --custom-height="45px"
+                        --custom-width="285px"
+                        --custom-margin="8px 0 4px 0"
+                        --custom-border-color="#A9A9A9"
             />
-            {#if lessThanMin }
-                <legend class="pass_match" class:less={lessThanMin}>Минимальная длина пароля 6 символов!</legend>
-            {/if}
             {#if passNotMatch }
-                <legend class="pass_match" class:notMatch={passNotMatch}>Пароли не совпадают!</legend>
+                <legend class="pass_match">{l10n.passwordsNotMatch}!</legend>
             {/if}
         </div>
-        <div class="check__for__male">
-            <ContentSwitcher>
+        <div class="check-for-male">
+            <ContentSwitcher bind:selectedIndex>
                 <Switch>
                     <div style="display: flex; align-items: center;">
-                        <Icon icon="ic:round-man" width="24" height="24" /> Man
+                        <Icon icon="ic:round-man" width="24" height="24"/>
+                        {l10n.gender(true)}
                     </div>
                 </Switch>
                 <Switch>
                     <div style="display: flex; align-items: center;">
-                        <Icon icon="ic:round-woman" width="24" height="24" /> Woman
+                        <Icon icon="ic:round-woman" width="24" height="24"/>
+                        {l10n.gender(false)}
                     </div>
                 </Switch>
             </ContentSwitcher>
         </div>
-        <Button size="small" icon={Login} on:click={registration} disabled={!clickable}>Регистрация</Button>
+        <Button size="small" icon={LoginIcon} on:click={signUp} disabled={!clickable}>{l10n.logUpAction}</Button>
         <div class="sign_in_link">
-            Уже есть аккаунт?
-            <Link to="/login" replace>Войти</Link>
+            {l10n.alreadyHaveAccount}?
+            <Link to="/login">{l10n.login}</Link>
         </div>
     </form>
 </div>
@@ -157,9 +176,28 @@
         box-sizing: content-box;
     }
 
+    :global(.sv-dd-item) {
+        height: 2rem;
+    }
+
+    :global(.sv-item) {
+        height: 100%;
+        align-items: center;
+        text-align: start;
+        font-size: 17px;
+    }
+
     :global(.bx--btn) {
-        border-radius: 5px;
+        border-radius: 6px;
         text-align: center;
+    }
+
+    :global(.bx--content-switcher-btn.bx--content-switcher--selected) {
+        z-index: 1;
+    }
+
+    :global(.bx--content-switcher-btn) {
+        justify-content: center;
     }
 
     .logo:hover {
@@ -213,11 +251,13 @@
     }
 
     /* Check for male */
-    .check__for__male {
+    .check-for-male {
+        max-width: calc(285px - 10%);
+        margin: 4px auto;
+
         text-align: center;
         display: flex;
         justify-content: space-between;
-        padding: 5px 20%;
     }
 
     /* Sign In Link */

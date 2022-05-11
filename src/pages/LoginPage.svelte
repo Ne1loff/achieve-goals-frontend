@@ -1,7 +1,9 @@
 <script lang="ts">
-    import {navigate, Link} from "svelte-routing"
+    import {Link, navigate} from "svelte-routing"
     import PasswordField from "../components/inputs/PasswordField.svelte";
     import InputField from "../components/inputs/InputField.svelte";
+    import Navbar from "../components/Navbar.svelte";
+    import {l10n} from "../resources/localization/l10n";
 
     let login = ''
     let password = ''
@@ -27,7 +29,6 @@
             else
                 alert("Не верный логин или пароль!")
         }).catch((err) => {
-
             console.log(err)
         })
     }
@@ -36,29 +37,25 @@
 
 <svelte:window on:keydown={handleKeydown}/>
 
-<header class="header">
-    <div class="container">
-        <div class="header__inner">
-            <div class="header__logo">
-                <img class="logo" on:click={() => navigate('/')} src="/static/logo_200x44.png" alt="logo">
-            </div>
-        </div>
-    </div>
-</header>
+<Navbar outlinedBottom --own-nav-bar-left-margin-left="4px">
+    <img slot="left" class="logo" on:click={() => navigate('/')} src="/static/logo_200x44.png" alt="logo">
+</Navbar>
 <div class="main-content">
     <div class="intro__inner">
         <form class="box" method="post">
             <h1>Login</h1>
             <div class="user_details">
                 <div class="input_box">
-                    <InputField bind:bindText={login} label="Username/Email"
+                    <InputField bind:value={login}
+                                placeholderText="Username/Email"
+                                label={l10n.login}
                                 --custom-height="45px"
                                 --custom-width="285px"
                                 --custom-border-color="#A9A9A9"
                     />
                 </div>
                 <div class="input_box">
-                    <PasswordField bind:password={password} label="Password"
+                    <PasswordField bind:password={password} label={l10n.password}
                                    newPass="{false}"
                                    --custom-height="45px"
                                    --custom-width="285px"
@@ -66,9 +63,10 @@
                     />
                 </div>
             </div>
-            <button class="submit_btn" type="button" on:click={sigIn}>Вход</button>
+            <button class="submit_btn" type="button" on:click={sigIn}>{l10n.logInAction}</button>
             <div class="signup_link">
-                Нет аккаунта? <Link to="/registration" replace >Зарегистрироваться</Link>
+                {l10n.noAccount}?
+                <Link to="/registration">{l10n.registration}</Link>
             </div>
         </form>
     </div>
@@ -76,54 +74,6 @@
 
 
 <style>
-
-
-    /* Container */
-    .container {
-        height: 100%;
-        max-width: 99%;
-        margin: 0 auto;
-    }
-
-    /* Header */
-    .header {
-        width: 100%;
-
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        height: 4rem;
-
-        background-color: white;
-    }
-
-    .header__inner {
-        height: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .header::after {
-        content: "";
-        display: block;
-
-        width: 100%;
-        height: 5px;
-
-        background-color: #707070;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        z-index: 1;
-    }
-
-
-    .logo:hover {
-        cursor: pointer;
-    }
 
     /* Intro */
     .main-content {
